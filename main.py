@@ -3,6 +3,7 @@ import schedule
 
 from application.use_case.mercadolivre_use_case import MercadolivreUseCase
 from infrastructure.adapter.mercadolivre_adapter import MercadolivreAdapter
+from infrastructure.adapter.geminai_adapter import GeminiAdapter
 from infrastructure.adapter.telegram_adapter import TelegramAdapter
 from infrastructure.repository.mercadolivre_repository_impl import MercadolivreRepositoryImpl
 
@@ -17,8 +18,9 @@ def job(use_case: MercadolivreUseCase):
 
 
 if __name__ == "__main__":
+    gemini_port = GeminiAdapter()
     mercadolivre_port = MercadolivreAdapter()
-    telegram_port = TelegramAdapter()
+    telegram_port = TelegramAdapter(gemini_port)
     mercadolivre_repository = MercadolivreRepositoryImpl()
 
     use_case = MercadolivreUseCase(

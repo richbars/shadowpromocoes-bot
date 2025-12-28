@@ -4,13 +4,11 @@ from bs4 import BeautifulSoup
 import requests
 from infrastructure.dto.productdto import ProductDTO
 from application.domain.port.mercadolivre_port import MercadolivrePort
-
+from concurrent.futures import ThreadPoolExecutor
 
 class MercadolivreAdapter(MercadolivrePort):
 
     def get_products(self) -> list[ProductDTO]:
-
-        product_list: list[ProductDTO] = []
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
         }
@@ -21,45 +19,48 @@ class MercadolivreAdapter(MercadolivrePort):
 
         elements = soup.select("#results > div > div")[0].contents
 
-        for el in elements:
+        def parse_product(el):
             try:
-
-                highlight = el.find_next('span', class_='poly-component__highlight')
-
+                highlight = el.select_one('span.poly-component__highlight')
                 type = highlight.text.strip() if highlight else "Oferta Relâmpago 🔥"
-                image = el.find_next('img', class_='poly-component__picture')['data-src']
-                title = el.find_next('h3', class_='poly-component__title-wrapper').text
 
-                link = el.find_next('a', href=True)['href']
+                image_tag = el.select_one('img.poly-component__picture')
+                image = image_tag['data-src'] if image_tag else ""
+
+                title_tag = el.select_one('h3.poly-component__title-wrapper')
+                title = title_tag.text.strip() if title_tag else "Sem título"
+
+                link_tag = el.select_one('a[href]')
+                link = link_tag['href'] if link_tag else ""
 
                 if "click1" in link:
                     link = self._resolve_redirect(link)
 
-                price = el.find_all_next('span', class_='andes-money-amount__fraction')[1].text
+                price_tags = el.select('span.andes-money-amount__fraction')
+                price = price_tags[1].text.strip() if len(price_tags) > 1 else "0"
 
-                discount = el.find_next('span', class_='andes-money-amount__discount poly-price__disc--pill')
-
-                if not discount:
-                    discount = el.find_next('span', class_='poly-price__disc_label andes-money-amount__discount poly-price__disc_label--pill')
+                discount_tag = el.select_one('span.andes-money-amount__discount, span.poly-price__disc_label')
+                discount = discount_tag.text.strip() if discount_tag else ""
 
                 affiliate_link, id = self._build_affiliate_link(link)
 
-                product = ProductDTO(
+                return ProductDTO(
                     id=id,
                     type=type,
                     title=title,
                     url_image=image,
                     url=link,
                     price=price,
-                    discount=discount.text,
+                    discount=discount,
                     affiliate_link=affiliate_link
                 )
 
-                product_list.append(product)
-
             except Exception as e:
                 print(f"Erro ao processar produto: {e}")
-                continue
+                return None
+
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            product_list = list(filter(None, executor.map(parse_product, elements)))
 
         return product_list
 
@@ -113,17 +114,6 @@ class MercadolivreAdapter(MercadolivrePort):
 
         except Exception as e:
             print(f"Error in generate affiliate link: {e}")
-
-    def _get_id_product(self, product_url: str) -> str:
-        match = re.search(r"/(MLBU?)-?(\d+)", product_url)
-
-        if not match:
-            return None
-
-        prefix = match.group(1)
-        number = match.group(2)
-
-        return f"{prefix}-{number}"
 
     def _resolve_redirect(self, url: str) -> str:
         headers = {

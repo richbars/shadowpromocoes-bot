@@ -6,15 +6,16 @@ from requests import HTTPError
 
 from application.domain.port.telegram_port import TelegramPort
 from infrastructure.dto.productdto import ProductDTO
+from application.domain.port.gemini_port import GeminiPort
 
 load_dotenv()
 
-
 class TelegramAdapter(TelegramPort):
 
-    def __init__(self):
+    def __init__(self, gemini_port: GeminiPort):
         self._bot_token = os.getenv("TELEGRAM_TOKEN")
         self._channel_id = os.getenv("TELEGRAM_CHANNEL")
+        self._gemini_port = gemini_port
 
         if not self._bot_token or not self._channel_id:
             raise RuntimeError("TELEGRAM_TOKEN ou TELEGRAM_CHANNEL não definidos")
@@ -32,7 +33,6 @@ class TelegramAdapter(TelegramPort):
                 "parse_mode": "Markdown"
             }
             self._send_with_retry(payload)
-
 
 
     def _build_caption(self, product: ProductDTO) -> str:

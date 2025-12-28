@@ -1,6 +1,6 @@
 from application.domain.entitie.mercadolivre_entity import MercadolivreEntity
 from application.domain.port.mercadolivre_repository_port import MercadolivreRepository
-from infrastructure.persistence.connection import get_connection
+from infrastructure.persistence.sqlite import get_connection
 
 class MercadolivreRepositoryImpl(MercadolivreRepository):
 
@@ -32,15 +32,6 @@ class MercadolivreRepositoryImpl(MercadolivreRepository):
         conn.commit()
         conn.close()
 
-    def save(self, affiliate: MercadolivreEntity) -> None:
-        conn = get_connection()
-        conn.execute(
-            "INSERT OR REPLACE INTO mercadolivre (id, affiliate_link) VALUES (?, ?)",
-            (affiliate.id, affiliate.affiliate_link)
-        )
-        conn.commit()
-        conn.close()
-
     def exists_by_product_id(self, product_id: str) -> bool:
         conn = get_connection()
         cursor = conn.cursor()
@@ -51,16 +42,3 @@ class MercadolivreRepositoryImpl(MercadolivreRepository):
         )
 
         return cursor.fetchone() is not None
-
-    def find_by_id(self, affiliate_id: str) -> MercadolivreEntity | None:
-        conn = get_connection()
-        cursor = conn.execute(
-            "SELECT id, mercadolivre FROM affiliates WHERE id = ?",
-            (affiliate_id,)
-        )
-        row = cursor.fetchone()
-        conn.close()
-
-        if row:
-            return MercadolivreEntity(id=row[0], affiliate_link=row[1])
-        return None
