@@ -4,7 +4,7 @@ import requests
 from dotenv import load_dotenv
 
 from application.domain.port.gemini_port import GeminiPort
-from infrastructure.dto.productdto import ProductDTO
+from application.domain.dto.productdto import ProductDTO
 
 load_dotenv()
 

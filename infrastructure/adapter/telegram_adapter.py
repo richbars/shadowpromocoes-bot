@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from requests import HTTPError
 
 from application.domain.port.telegram_port import TelegramPort
-from infrastructure.dto.productdto import ProductDTO
+from application.domain.dto.productdto import ProductDTO
 from application.domain.port.gemini_port import GeminiPort
 
 load_dotenv()

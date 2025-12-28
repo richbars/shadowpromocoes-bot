@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import requests
 from dotenv import load_dotenv
 
-from infrastructure.dto.productdto import ProductDTO
+from application.domain.dto.productdto import ProductDTO
 from application.domain.port.mercadolivre_port import MercadolivrePort
 from concurrent.futures import ThreadPoolExecutor
 
