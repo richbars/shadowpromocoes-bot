@@ -17,23 +17,29 @@ class MercadolivreUseCase(MercadolivreUseCasePort):
         self.mercadolivre_repository = mercadolivre_repository
 
     def execute(self) -> None:
-        products = self.mercadolivre_port.get_products()
+        try:
+            products = self.mercadolivre_port.get_products()
+            existing_ids = set(self.mercadolivre_repository.find_all_product_ids())
 
-        existing_ids = set(
-            self.mercadolivre_repository.find_all_product_ids()
-        )
+            new_products = [p for p in products if p.id not in existing_ids]
+            if not new_products:
+                return
 
-        new_products = [
-            p for p in products
-            if p.id not in existing_ids
-        ]
+            successful_products = []
 
-        if not new_products:
-            return
+            for p in new_products:
+                try:
+                    self.telegram_port.send_messages([p])
+                    successful_products.append(MercadolivreEntity(p.id, p.affiliate_link))
+                except Exception as e:
+                    print(f"Erro ao enviar produto {p.id} para o Telegram: {e}")
 
-        self.telegram_port.send_messages(new_products)
+            if successful_products:
+                try:
+                    self.mercadolivre_repository.save_all(successful_products)
+                except Exception as e:
+                    print(f"Erro ao salvar produtos na base: {e}")
 
-        self.mercadolivre_repository.save_all([
-            MercadolivreEntity(p.id, p.affiliate_link)
-            for p in new_products
-        ])
+        except Exception as e:
+            print(f"Erro ao executar a rotina do Mercadolivre: {e}")
+
