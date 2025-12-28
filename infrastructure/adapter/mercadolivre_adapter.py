@@ -1,12 +1,19 @@
-import re
+import os
 
 from bs4 import BeautifulSoup
 import requests
+from dotenv import load_dotenv
+
 from infrastructure.dto.productdto import ProductDTO
 from application.domain.port.mercadolivre_port import MercadolivrePort
 from concurrent.futures import ThreadPoolExecutor
 
+load_dotenv()
+
 class MercadolivreAdapter(MercadolivrePort):
+
+    def __init__(self):
+        self._csrf_token = os.getenv("CSRF_TOKEN")
 
     def get_products(self) -> list[ProductDTO]:
         product_list = []
@@ -37,16 +44,9 @@ class MercadolivreAdapter(MercadolivrePort):
         url = "https://www.mercadolivre.com.br/affiliate-program/api/v2/affiliates/createLink"
         payload = {"urls": [product_url], "tag": "sari7870152"}
         headers = {
-            "cookie": "_d2id=ae1e8c38-f920-4b85-833b-e4b92bf3a419-n; _csrf=mvhNg5Dr5e45RETz7o1y--YT",
-            "accept": "application/json, text/plain, */*",
-            "accept-language": "pt-BR,pt;q=0.5",
             "content-type": "application/json",
-            "newrelic": "eyJ2IjpbMCwxXSwiZCI6eyJ0eSI6IkJyb3dzZXIiLCJhYyI6Ijk4OTU4NiIsImFwIjoiMTgzNDg4Njc5MSIsImlkIjoiZmI4YWU4ZTVmM2Q3NTYyMiIsInRyIjoiMzU5YmI1MGNjZTdhYWM0OWYzZDJmMmFlNGU4MWVmZTgiLCJ0aSI6MTc2Njg2NjU1NzE4NCwidGsiOiIxNzA5NzA3In19",
-            "traceparent": "00-359bb50cce7aac49f3d2f2ae4e81efe8-fb8ae8e5f3d75622-01",
-            "tracestate": "1709707@nr=0-1-989586-1834886791-fb8ae8e5f3d75622----1766866557184",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-            "x-csrf-token": "qm5AldP5-X-0uZtkL3mRunv-kV91ZJUDy918",
-            "x-newrelic-id": "XQ4OVF5VGwIHVFdVBwQBVlE=",
+            "x-csrf-token": self._csrf_token,
             "Cookie": (
                 "ftid=s7BHX0Y6JhKfWeFarvpvY0woWTUQAGIW-1758834340722; "
                 "orgnickp=SARI7870152; "
