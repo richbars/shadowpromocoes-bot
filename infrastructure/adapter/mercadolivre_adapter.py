@@ -114,6 +114,7 @@ class MercadolivreAdapter(MercadolivrePort):
 
             price_tags = el.select('span.andes-money-amount__fraction')
             price = price_tags[1].text.strip() if len(price_tags) > 1 else "0"
+            price_original = price_tags[0].text.strip()
 
             discount_tag = el.select_one('span.andes-money-amount__discount, span.poly-price__disc_label')
             discount = discount_tag.text.strip() if discount_tag else ""
@@ -122,11 +123,13 @@ class MercadolivreAdapter(MercadolivrePort):
 
             return ProductDTO(
                 id=id,
+                source="Mercado Livre",
                 type=type,
                 title=title,
                 url_image=image,
                 url=link,
                 price=price,
+                price_original=price_original,
                 discount=discount,
                 affiliate_link=affiliate_link
             )

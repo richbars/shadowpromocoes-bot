@@ -1,7 +1,9 @@
 import os
+import time
 
 import requests
 from dotenv import load_dotenv
+from requests import HTTPError, RequestException
 
 from application.domain.port.gemini_port import GeminiPort
 from application.domain.dto.productdto import ProductDTO
@@ -15,6 +17,8 @@ class GeminiAdapter(GeminiPort):
         self._url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
     def generate_description(self, product: ProductDTO) -> str:
+        retries = 0
+        max_retries = 3
         payload = {
             "contents": [
                 {
@@ -48,10 +52,28 @@ class GeminiAdapter(GeminiPort):
             "x-goog-api-key": self._token
         }
 
-        try:
-            response = requests.request("POST", self._url, json=payload, headers=headers)
-            response.raise_for_status()
-            data = response.json()
-            return data['candidates'][0]['content']['parts'][0]['text']
-        except Exception as e:
-            print(f"Error in call Gemini API: {e}")
+        while retries < max_retries:
+
+            try:
+                response = requests.request("POST", self._url, json=payload, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                return data['candidates'][0]['content']['parts'][0]['text']
+
+            except HTTPError as e:
+                response = e.response
+                status_code = response.status_code
+
+                if status_code == 429:
+                    wait_delay = int(response.json()['error']['details'][2]['retryDelay'].replace("s", ""))
+                    time.sleep(wait_delay)
+                    retries +=1
+                    continue
+
+                raise
+
+            except RequestException:
+                time.sleep(2 ** retries)
+                retries += 1
+
+        raise RuntimeError("Gemini API rate limit exceeded. Too many requests.")

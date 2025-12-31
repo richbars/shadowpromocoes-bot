@@ -23,17 +23,22 @@ class TelegramAdapter(TelegramPort):
         self._base_url = f"https://api.telegram.org/bot{self._bot_token}"
 
     def send_messages(self, products: list[ProductDTO]) -> None:
-
         for i in products:
-            caption = self._build_caption(i)
-            payload = {
-                "chat_id": self._channel_id,
-                "photo": i.url_image,
-                "caption": caption,
-                "parse_mode": "Markdown"
-            }
-            self._send_with_retry(payload)
+            try:
 
+                caption = self._build_captionv2(i)
+
+                payload = {
+                    "chat_id": self._channel_id,
+                    "photo": i.url_image,
+                    "caption": caption,
+                    "parse_mode": "MarkdownV2"
+                }
+
+                self._send_with_retry(payload)
+
+            except Exception as e:
+                print(f"Erro ao enviar produto {i.id} para o Telegram: {e}")
 
     def _build_caption(self, product: ProductDTO) -> str:
         return (
@@ -42,6 +47,16 @@ class TelegramAdapter(TelegramPort):
             f"💰 *Preço:* R$ {product.price}\n"
             f"🏷 *Desconto:* {product.discount}\n\n"
             f"👉 [COMPRAR AGORA]({product.affiliate_link})"
+        )
+
+    def _build_captionv2(self, product: ProductDTO) -> str:
+        return (
+            f"🔥 *{product.source}*\n\n"
+            f"*{product.title}*\n\n"
+            f"🔥 *{product.discount}*\n\n"
+            f"💰 *De:* ~R$ {product.price_original}~\n"
+            f"✅ *Por:*  R$ {product.price}\n\n"
+            f"👉 [Pegar Promoção]({product.affiliate_link})"
         )
 
     def _send_with_retry(self, payload: dict, max_retries: int = 3) -> None:
