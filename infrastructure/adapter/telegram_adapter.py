@@ -38,11 +38,11 @@ class TelegramAdapter(TelegramPort):
                 self._send_with_retry(payload)
 
             except Exception as e:
-                print(f"Erro ao enviar produto {i.id} para o Telegram: {e}")
+                print(f"Erro ao enviar produto {i.id} para o Telegram: {e} -> image: {i.url_image}")
 
     def _build_caption(self, product: ProductDTO) -> str:
         return (
-            f"🔥 *{product.type}*\n\n"
+            f"🛍️ *{product.type}*\n\n"
             f"*{product.title}*\n\n"
             f"💰 *Preço:* R$ {product.price}\n"
             f"🏷 *Desconto:* {product.discount}\n\n"
