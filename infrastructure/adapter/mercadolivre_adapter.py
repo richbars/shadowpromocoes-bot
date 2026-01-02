@@ -103,8 +103,8 @@ class MercadolivreAdapter(MercadolivrePort):
             image_tag = el.select_one('img.poly-component__picture')
             image = image_tag['data-src'] if image_tag else ""
 
-            if image.endswith(".wedbp"):
-                image = image.replace(".wedbp", ".jpg")
+            if image.endswith(".webp"):
+                image = image.replace(".webp", ".jpg")
 
             title_tag = el.select_one('h3.poly-component__title-wrapper')
             title = title_tag.text.strip() if title_tag else "Sem título"
