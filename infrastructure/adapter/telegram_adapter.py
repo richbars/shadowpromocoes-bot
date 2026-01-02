@@ -51,7 +51,7 @@ class TelegramAdapter(TelegramPort):
 
     def _build_captionv2(self, product: ProductDTO) -> str:
         return (
-            f"🔥 *{product.source}*\n\n"
+            f"🛍 *{product.source}*\n\n"
             f"*{product.title}*\n\n"
             f"🔥 *{product.discount}*\n\n"
             f"💰 *De:* ~R$ {product.price_original}~\n"
