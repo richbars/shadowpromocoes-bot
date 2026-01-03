@@ -32,7 +32,7 @@ class TelegramAdapter(TelegramPort):
                     "chat_id": self._channel_id,
                     "photo": i.url_image,
                     "caption": caption,
-                    "parse_mode": "MarkdownV2"
+                    "parse_mode": "Markdown"
                 }
 
                 self._send_with_retry(payload)
@@ -50,12 +50,14 @@ class TelegramAdapter(TelegramPort):
         )
 
     def _build_captionv2(self, product: ProductDTO) -> str:
+        title = product.title.replace("*", "x")
+
         return (
             f"🛍 *{product.source}*\n\n"
-            f"*{product.title}*\n\n"
+            f"*{title}*\n\n"
             f"🔥 *{product.discount}*\n\n"
-            f"💰 *De:* ~R$ {product.price_original}~\n"
-            f"✅ *Por:*  R$ {product.price}\n\n"
+            f"💰 *De:* R$ {product.price_original}\n"
+            f"✅ *Por:* R$ {product.price}\n\n"
             f"👉 [Pegar Promoção]({product.affiliate_link})"
         )
 
@@ -64,10 +66,30 @@ class TelegramAdapter(TelegramPort):
 
         while retries <= max_retries:
             try:
+
+                img = requests.get(
+                    payload["photo"],
+                    headers={"User-Agent": "Mozilla/5.0"},
+                    timeout=10
+                )
+                img.raise_for_status()
+
                 time.sleep(1.2)
+
+                files = {
+                    "photo": ("image.webp", img.content, "image/webp")
+                }
+
+                data = {
+                    "chat_id": payload["chat_id"],
+                    "caption": payload.get("caption"),
+                    "parse_mode": payload.get("parse_mode")
+                }
+
                 response = requests.post(
                     f"{self._base_url}/sendPhoto",
-                    json=payload,
+                    data=data,
+                    files=files,
                     timeout=10
                 )
                 response.raise_for_status()
